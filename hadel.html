@@ -1,0 +1,312 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إلى هديل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e2022;
+            --secondary: #52616b;
+            --accent: #c9d6df;
+            --bg: #f0f5f9;
+            --danger: #ff4b4b;
+            --success: #28a745;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        
+        .card {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 480px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            border-top: 5px solid var(--primary);
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--accent);
+            margin: -80px auto 20px auto;
+            background-color: #eee;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-size: 2.2rem;
+        }
+        p {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            color: var(--secondary);
+            margin-bottom: 35px;
+        }
+        .highlight {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            position: relative;
+            min-height: 55px;
+        }
+        button {
+            font-family: inherit;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-yes {
+            background-color: var(--primary);
+            color: white;
+            flex: 1;
+            max-width: 200px;
+        }
+        .btn-yes:hover {
+            background-color: #000;
+        }
+        .btn-no {
+            background-color: transparent;
+            color: var(--danger);
+            border: 2px solid var(--danger);
+            flex: 1;
+            max-width: 200px;
+            position: relative;
+        }
+        
+        #signatureArea {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+        canvas {
+            border: 2px dashed #cfd8dc;
+            border-radius: 8px;
+            background: #fafafa;
+            margin: 20px 0;
+            cursor: crosshair;
+            touch-action: none;
+            width: 100%;
+            max-width: 350px;
+        }
+        .btn-submit {
+            background-color: var(--success);
+            color: white;
+            width: 100%;
+            max-width: 350px;
+        }
+        .timestamp {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        #finalMessage {
+            display: none;
+            text-align: center;
+        }
+        .stamp {
+            display: inline-block;
+            border: 4px solid var(--success);
+            color: var(--success);
+            padding: 10px 20px;
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            border-radius: 10px;
+            transform: rotate(-10deg);
+            margin: 30px 0;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="mainCard">
+        <div id="introSection">
+            <img src="hadeel.jpg" alt="هديل" class="profile-img" onerror="this.style.display='none'">
+            
+            <h1>إلى هديل</h1>
+            <p>تعليقي على الفيديو كان خطأ وما أنطى لجهدج حقه. <span class="highlight">هديل</span>، قيمتج محفوظة والصداقة أهم من تصرف غير محسوب. نفتح صفحة جديدة؟</p>
+            
+            <div class="btn-container">
+                <button class="btn-yes" onclick="showSignature()">صافية لبن</button>
+                <button class="btn-no" id="noBtn">لا، مارضيت</button>
+            </div>
+        </div>
+
+        <div id="signatureArea">
+            <h1>توثيق الصلح</h1>
+            <p>الرجاء توقيع <span class="highlight">هديل</span> أدناه لاعتماد المعاهدة رسمياً.</p>
+            <canvas id="sigCanvas" width="350" height="180"></canvas>
+            <button class="btn-submit" onclick="submitTreaty()">اعتماد التوقيع</button>
+            <div class="timestamp" id="currentTime"></div>
+        </div>
+
+        <div id="finalMessage">
+            <div class="stamp">تم الصلح</div>
+            <p class="highlight">تم توثيق معاهدة الصلح رسمياً.</p>
+            <div class="timestamp" id="finalTime"></div>
+        </div>
+    </div>
+
+    <script>
+        const noBtn = document.getElementById('noBtn');
+        const evasionTexts = [
+            "هديل، متأكدة؟",
+            "فكري زين",
+            "ترا خوش ولد",
+            "مو من كلبج",
+            "فضيها ووافقي",
+            "راح تتعبين بالرفض",
+            "عناد هو؟"
+        ];
+        let textIndex = 0;
+
+        function moveButton() {
+            const btnRect = noBtn.getBoundingClientRect();
+            const containerRect = document.body.getBoundingClientRect();
+            
+            const maxX = containerRect.width - btnRect.width - 20;
+            const maxY = containerRect.height - btnRect.height - 20;
+            
+            const randomX = Math.max(10, Math.floor(Math.random() * maxX));
+            const randomY = Math.max(10, Math.floor(Math.random() * maxY));
+            
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = randomX + 'px';
+            noBtn.style.top = randomY + 'px';
+            
+            noBtn.innerText = evasionTexts[textIndex];
+            textIndex = (textIndex + 1) % evasionTexts.length;
+        }
+
+        noBtn.addEventListener('mouseover', moveButton);
+        noBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault(); 
+            moveButton();
+        });
+
+        function showSignature() {
+            document.getElementById('introSection').style.display = 'none';
+            document.getElementById('signatureArea').style.display = 'block';
+            document.getElementById('currentTime').innerText = "تاريخ الإنشاء: " + new Date().toLocaleString('ar-IQ');
+            initCanvas();
+        }
+
+        let canvas, ctx;
+        let isDrawing = false;
+
+        function initCanvas() {
+            canvas = document.getElementById('sigCanvas');
+            ctx = canvas.getContext('2d');
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#1e2022';
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
+            canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function getMousePos(canvas, evt) {
+            var rect = canvas.getBoundingClientRect();
+            return {
+                x: (evt.clientX - rect.left) * (canvas.width / rect.width),
+                y: (evt.clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function getTouchPos(canvas, evt) {
+            var rect = canvas.getBoundingClientRect();
+            return {
+                x: (evt.touches[0].clientX - rect.left) * (canvas.width / rect.width),
+                y: (evt.touches[0].clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            var pos = getMousePos(canvas, e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            var pos = getMousePos(canvas, e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            isDrawing = true;
+            var pos = getTouchPos(canvas, e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            var pos = getTouchPos(canvas, e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        }
+
+        function submitTreaty() {
+            document.getElementById('signatureArea').style.display = 'none';
+            document.getElementById('finalMessage').style.display = 'block';
+            document.getElementById('finalTime').innerText = "وثيقة رقم: " + Math.floor(Math.random() * 1000000) + " | " + new Date().toLocaleString('ar-IQ');
+        }
+    </script>
+</body>
+</html>
+
+
+```
